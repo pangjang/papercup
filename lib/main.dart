@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: '점심 메뉴 월드컵',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -26,97 +26,167 @@ class MyApp extends StatelessWidget {
         // state is not lost during the reload. To reset the state, use hot
         // restart instead.
         //
-        // This works for code too, not just values: Most code changes can be
+        // This works for code too, not just valueㅇs: Most code changes can be
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const FoodWorldCup(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class FoodWorldCup extends StatefulWidget {
+  const FoodWorldCup({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<FoodWorldCup> createState() => _FoodWorldCupState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _FoodWorldCupState extends State<FoodWorldCup> {
+  // 음식 메뉴 리스트
+  final List<Food> foods = [
+    Food(name: '김치찌개', imageUrl: 'assets/kimchi_stew.jpg'),
+    Food(name: '비빔밥', imageUrl: 'assets/bibimbap.jpg'),
+    Food(name: '돈까스', imageUrl: 'assets/tonkatsu.jpg'),
+    Food(name: '짜장면', imageUrl: 'assets/jjajangmyeon.jpg'),
+    Food(name: '라면', imageUrl: 'assets/ramen.jpg'),
+    Food(name: '제육볶음', imageUrl: 'assets/jeyuk.jpg'),
+    Food(name: '김밥', imageUrl: 'assets/kimbap.jpg'),
+    Food(name: '샐러드', imageUrl: 'assets/salad.jpg'),
+  ];
 
-  void _incrementCounter() {
+  List<Food> currentRound = [];
+  List<Food> winners = [];
+  int currentMatch = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    currentRound = List.from(foods);
+    currentRound.shuffle(); // 메뉴 순서를 랜덤하게 섞기
+  }
+
+  void selectWinner(Food winner) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      winners.add(winner);
+      currentMatch++;
+
+      // 현재 라운드가 끝났는지 확인
+      if (currentMatch >= currentRound.length ~/ 2) {
+        if (winners.length == 1) {
+          showDialog(
+            context: context,
+            builder:
+                (context) => AlertDialog(
+                  title: const Text('우승 메뉴'),
+                  content: Text('오늘의 점심 메뉴는 ${winner.name} 입니다!'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        setState(() {
+                          currentRound = List.from(foods);
+                          currentRound.shuffle();
+                          winners.clear();
+                          currentMatch = 0;
+                        });
+                      },
+                      child: const Text('다시하기'),
+                    ),
+                  ],
+                ),
+          );
+        } else {
+          // 다음 라운드 준비
+          currentRound = List.from(winners);
+          winners.clear();
+          currentMatch = 0;
+        }
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    if (currentRound.length < 2) return const Center(child: Text('게임 종료'));
+
+    final food1 = currentRound[currentMatch * 2];
+    final food2 = currentRound[currentMatch * 2 + 1];
+
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
+        title: Text(
+          '${currentRound.length}강 ${currentMatch + 1}/${currentRound.length ~/ 2}',
+        ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => selectWinner(food1),
+                child: FoodCard(food: food1),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'VS',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => selectWinner(food2),
+                child: FoodCard(food: food2),
+              ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
+
+class Food {
+  final String name;
+  final String imageUrl;
+
+  Food({required this.name, required this.imageUrl});
+}
+
+class FoodCard extends StatelessWidget {
+  final Food food;
+
+  const FoodCard({super.key, required this.food});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Image.asset(
+              food.imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.restaurant, size: 100);
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              food.name,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
